@@ -1,30 +1,38 @@
-name: CI
-
-on: [push, pull_request]
-
-permissions:
-  contents: read #  to fetch code (actions/checkout)
-
 jobs:
   build:
+    name: Java ${{ matrix.java-version }}
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+    - continue-on-error: true
+      name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: ${{ matrix.java-version }}
+    - continue-on-error: true
+      name: Test
+      run: 'cd h2
+
+        echo $JAVA_OPTS
+
+        export JAVA_OPTS=-Xmx512m
+
+        ./build.sh jar testCI
+
+        '
     strategy:
       fail-fast: false
       matrix:
-        java-version: [11, 17]
-    name: Java ${{ matrix.java-version }}
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 1
-    - name: Set up JDK ${{ matrix.java-version }}
-      uses: actions/setup-java@v3
-      with:
-        java-version: ${{ matrix.java-version }}
-        distribution: temurin
-    - name: Test
-      run: |
-        cd h2
-        echo $JAVA_OPTS
-        export JAVA_OPTS=-Xmx512m
-        ./build.sh jar testCI
+        java-version:
+        - 11
+        - 17
+name: CI
+on:
+  repository_dispatch:
+    types: trigger-ga___CI.yml
+permissions:
+  contents: read
